@@ -141,6 +141,57 @@ main { padding: 28px 0 60px; }
   transition: border-color 0.15s;
 }
 .market-select:focus { border-color: var(--green); }
+.tweet-bar {
+  background: var(--bg2);
+  border: 1px solid var(--green-border);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.tweet-input-wrap { display: flex; align-items: center; gap: 10px; flex: 1; flex-wrap: wrap; }
+.tweet-input {
+  width: 90px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--green-border);
+  background: var(--bg3);
+  color: var(--green);
+  font-family: 'DM Mono', monospace;
+  font-size: 18px;
+  font-weight: 600;
+  text-align: center;
+  outline: none;
+}
+.tweet-input:focus { border-color: var(--green); box-shadow: 0 0 0 2px rgba(0,217,126,0.15); }
+.tweet-range-bar { display: flex; gap: 6px; flex-wrap: wrap; }
+.range-btn {
+  font-size: 11px; padding: 4px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--bg3);
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  transition: all 0.12s;
+}
+.range-btn:hover { border-color: var(--green-border); color: var(--green); }
+.range-btn.active { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.tweet-signal {
+  font-size: 12px;
+  font-family: 'DM Mono', monospace;
+  padding: 6px 12px;
+  border-radius: var(--radius);
+  background: var(--bg4);
+  color: var(--text3);
+  white-space: nowrap;
+}
+.tweet-signal.bull { background: var(--green-dim); color: var(--green); }
+.tweet-signal.bear { background: var(--red-dim); color: var(--red); }
+.tweet-signal.neutral { background: var(--amber-dim); color: var(--amber); }
 
 /* Metrics strip */
 .metrics {
@@ -410,6 +461,20 @@ footer {
   </div>
 
   <!-- Metrics strip -->
+  <!-- Tweet count input bar -->
+  <div class="tweet-bar fade-in" id="tweet-bar">
+    <div style="display:flex;flex-direction:column;gap:3px">
+      <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.06em">Live tweet count</span>
+      <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">from polymarket</span>
+    </div>
+    <div class="tweet-input-wrap">
+      <input class="tweet-input" type="number" id="tweet-count" placeholder="153" min="0" max="2000" oninput="onTweetCount()" />
+      <div class="tweet-range-bar" id="range-btns"></div>
+    </div>
+    <span class="tweet-signal" id="tweet-signal">enter tweet count →</span>
+    <span id="hours-left" style="display:none">12</span>
+  </div>
+
   <div class="metrics fade-in">
     <div class="metric"><div class="metric-label">Markets found</div><div class="metric-value" id="m-total">—</div><div class="metric-sub">total</div></div>
     <div class="metric"><div class="metric-label">Resolved</div><div class="metric-value blue" id="m-resolved">—</div><div class="metric-sub">with outcome</div></div>
@@ -750,6 +815,10 @@ async function selectMarket(idx){
   selIdx=idx;const m=markets[idx];if(!m)return;
   const mp=getPrice(m);
   document.getElementById('s-mkt').textContent=pct(mp);
+  document.getElementById('tweet-count').value='';
+  document.getElementById('tweet-signal').textContent='enter tweet count →';
+  document.getElementById('tweet-signal').className='tweet-signal';
+  updateRangeButtons(m);
   const mStatus=m.closed?'closed':'live';
   const mPill=document.getElementById('market-status');
   mPill.textContent=mStatus;
@@ -781,6 +850,77 @@ function computeSmartMoney(holders){
   return{bias,label:Math.abs(bias)<0.05?'neutral':bias>0?'YES bias':'NO bias',yesPct,strength,yesShares:ys,noShares:ns,holders};
 }
 
+function getTweetCount(){ return parseInt(document.getElementById('tweet-count').value)||null; }
+
+function extractRange(question){
+  // extract low-high from question like "Will Elon Musk post 160-179 tweets..."
+  const match=(question||'').match(/(\d+)-(\d+)/);
+  if(match)return{low:parseInt(match[1]),high:parseInt(match[2])};
+  const plus=(question||'').match(/(\d+)\+/);
+  if(plus)return{low:parseInt(plus[1]),high:9999};
+  return null;
+}
+
+function computeTweetSignal(m, tweetCount){
+  if(!tweetCount)return{signal:0,label:'no data',color:'neutral'};
+  const range=extractRange(m.question||'');
+  if(!range)return{signal:0,label:'no range',color:'neutral'};
+  const {low,high}=range;
+  const remaining=high-tweetCount;
+  const needed=low-tweetCount;
+
+  if(tweetCount>high) return{signal:-0.9,label:`already over (${tweetCount} > ${high}) → NO`,color:'bear'};
+  if(tweetCount>=low && tweetCount<=high){
+    // currently in range — needs to stay here
+    const hoursLeft=parseFloat(document.getElementById('hours-left').textContent)||12;
+    const avgTweetsPerHour=tweetCount/((7*24)-hoursLeft)||1;
+    const projectedEnd=tweetCount+avgTweetsPerHour*hoursLeft;
+    if(projectedEnd>high) return{signal:-0.4,label:`in range but trending over → risky`,color:'neutral'};
+    return{signal:0.3,label:`in range (${low}-${high}) · needs to stay`,color:'neutral'};
+  }
+  if(tweetCount<low){
+    const gap=low-tweetCount;
+    if(gap<=5) return{signal:0.7,label:`${gap} tweets away from range → likely YES`,color:'bull'};
+    if(gap<=15) return{signal:0.4,label:`${gap} tweets needed · possible`,color:'neutral'};
+    return{signal:-0.3,label:`${gap} tweets needed · unlikely`,color:'bear'};
+  }
+  return{signal:0,label:'unclear',color:'neutral'};
+}
+
+function onTweetCount(){
+  const count=getTweetCount();
+  const m=markets[selIdx];
+  if(!m||!count)return;
+  const ts=computeTweetSignal(m,count);
+  const el=document.getElementById('tweet-signal');
+  el.textContent=ts.label;
+  el.className='tweet-signal '+ts.color;
+  // re-run model with new signal
+  const mp=getPrice(m);
+  const sm={bias:0,yesPct:0.5,strength:0,label:'neutral',holders:[]};
+  const result=computeModel(m,mp,sm);
+  renderSignals(m,mp,result,sm);
+  renderScoreRing(result,mp);
+  renderSteps(m,mp,result,sm);
+}
+
+function updateRangeButtons(m){
+  const range=extractRange(m.question||'');
+  const container=document.getElementById('range-btns');
+  if(!range){container.innerHTML='';return;}
+  const {low,high}=range;
+  // show buttons for nearby values
+  const steps=[];
+  for(let v=Math.max(0,low-20);v<=high+20;v+=5) steps.push(v);
+  container.innerHTML=steps.map(v=>`<button class="range-btn" onclick="setTweetCount(${v})">${v}</button>`).join('');
+}
+
+function setTweetCount(v){
+  document.getElementById('tweet-count').value=v;
+  document.querySelectorAll('.range-btn').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===v));
+  onTweetCount();
+}
+
 function computeModel(m,mp,sm){
   const h=histories[m.id]||[],resolved=modelCache.resolved||[],nResolved=resolved.length;
   const yesCount=resolved.filter(r=>getOutcome(r)===1).length;
@@ -788,8 +928,21 @@ function computeModel(m,mp,sm){
   let momentum=0;
   if(h.length>=6){const r=h.slice(-3).reduce((a,b)=>a+b.p,0)/3,e=h.slice(-6,-3).reduce((a,b)=>a+b.p,0)/3;momentum=r-e;}
   const timingRate=modelCache.timingRate||0.5,smBias=sm.bias||0;
-  const w={hist:0.30,market:0.25,momentum:0.15,timing:0.15,smart:0.15};
-  const estimate=Math.max(0.02,Math.min(0.98,w.hist*histBase+w.market*mp+w.momentum*(mp+momentum*2)+w.timing*timingRate+w.smart*(0.5+smBias*2)));
+  // tweet count signal
+  const tweetCount=getTweetCount();
+  const tweetSig=tweetCount?computeTweetSignal(m,tweetCount):{signal:0};
+  const tweetBias=tweetSig.signal||0;
+  const hasTweet=tweetCount?true:false;
+
+  // adjust weights when tweet count is available
+  const w=hasTweet
+    ?{hist:0.15,market:0.15,momentum:0.10,timing:0.10,smart:0.10,tweet:0.40}
+    :{hist:0.30,market:0.25,momentum:0.15,timing:0.15,smart:0.15,tweet:0};
+
+  const tweetComponent=hasTweet?(0.5+tweetBias*0.5):0.5;
+  const estimate=Math.max(0.02,Math.min(0.98,
+    w.hist*histBase+w.market*mp+w.momentum*(mp+momentum*2)+w.timing*timingRate+w.smart*(0.5+smBias*2)+w.tweet*tweetComponent
+  ));
   const vol=parseFloat(m.volumeNum||m.volume||0);
   const avgVol=markets.reduce((a,b)=>a+parseFloat(b.volumeNum||b.volume||0),0)/Math.max(markets.length,1);
   const confidence=Math.min(0.95,Math.max(0.1,0.2+(nResolved/25)*0.35+(h.length>15?0.2:h.length>5?0.1:0)+(sm.strength||0)*0.15+(vol>avgVol?0.1:0)));
@@ -892,14 +1045,17 @@ function renderScoreRing(r,mp){
 
 function renderSteps(m,mp,r,sm){
   const edge=r.estimate-mp;
+  const tc=getTweetCount();
+  const ts=tc?computeTweetSignal(markets[selIdx]||{},tc):{label:'not entered'};
   const steps=[
     {n:'1',t:`Collected ${r.nResolved} resolved markets · computed base YES rate`,v:pct1(r.histBase)},
     {n:'2',t:`Current market price from Polymarket CLOB API`,v:pct1(mp)},
     {n:'3',t:`Price momentum: avg last 3 snapshots vs prior 3 (${r.h.length} pts total)`,v:(r.momentum>=0?'+':'')+pct1(r.momentum)},
     {n:'4',t:`Day-of-week base rate · ${DAYS[new Date().getDay()]} historical`,v:pct1(r.timingRate)},
     {n:'5',t:`Smart money signal from Data API holder positions (${sm.holders?sm.holders.length:0} holders)`,v:sm.label},
-    {n:'6',t:`Weighted sum: 30% hist · 25% market · 15% momentum · 15% timing · 15% smart`,v:'→ '+pct1(r.estimate)},
-    {n:'7',t:`Edge vs market · confidence score`,v:(edge>=0?'+':'')+pct1(edge)+' · '+pct(r.confidence)},
+    {n:'6',t:`Live tweet count signal ${tc?'('+tc+' tweets)':'(not entered)'}`,v:tc?ts.label:'— enter count above'},
+    {n:'7',t:`Weighted sum · tweet signal gets ${tc?'40%':'0%'} weight when entered`,v:'→ '+pct1(r.estimate)},
+    {n:'8',t:`Edge vs market · confidence score`,v:(edge>=0?'+':'')+pct1(edge)+' · '+pct(r.confidence)},
   ];
   document.getElementById('steps-wrap').innerHTML=steps.map(s=>`<div class="step-row"><span class="step-n">${s.n}</span><span class="step-t">${s.t}</span><span class="step-v">${s.v}</span></div>`).join('');
 }
