@@ -585,42 +585,67 @@ async function init(){
   setStatus('loading','connecting to polymarket...');
   try{
     const g=(path)=>PROXY+encodeURIComponent('https://gamma-api.polymarket.com'+path);
+
+    // generate slugs for current + recent weeks
+    function weekSlugs(){
+      const slugs=[];
+      const now=new Date();
+      const months=['january','february','march','april','may','june','july','august','september','october','november','december'];
+      for(let w=-8;w<=4;w++){
+        const d1=new Date(now); d1.setDate(d1.getDate()+w*7);
+        const d2=new Date(d1); d2.setDate(d2.getDate()+7);
+        const m1=months[d1.getMonth()],m2=months[d2.getMonth()];
+        const slug=`elon-musk-of-tweets-${m1}-${d1.getDate()}-${m1===m2?m2+'-'+d2.getDate():m2+'-'+d2.getDate()}`;
+        slugs.push(slug);
+        // also try alternate format
+        slugs.push(`elon-musk-tweets-${m1}-${d1.getDate()}-${m2}-${d2.getDate()}`);
+      }
+      return [...new Set(slugs)];
+    }
+
     const[openD,closedD]=await Promise.all([
       get(g('/markets?limit=100&closed=false&order=volume&ascending=false')),
       get(g('/markets?limit=100&closed=true&order=createdAt&ascending=false'))
     ]);
-    const filt=m=>{const q=((m.question||'')+(m.slug||'')+(m.groupItemTitle||'')).toLowerCase();return['elon','musk','tweet','tweets','#'].some(k=>q.includes(k))&&q.includes('elon')||q.includes('musk');};
+    const filt=m=>{const q=((m.question||'')+(m.slug||'')).toLowerCase();return['elon','musk','tweet'].some(k=>q.includes(k));};
     active=openD.filter(filt);closed=closedD.filter(filt);
 
-    // fetch events — bracket markets (140-159, 160-179 etc) are children of events
+    // fetch known event slugs directly — most reliable way to get bracket markets
     let eventMarkets=[];
+    const slugsToTry=weekSlugs();
+    setStatus('loading',`fetching ${slugsToTry.length} weekly event slugs...`);
+    const evResults=await Promise.allSettled(slugsToTry.map(s=>get(g('/events?slug='+s))));
+    for(const r of evResults){
+      if(r.status==='fulfilled'){
+        const evArr=Array.isArray(r.value)?r.value:[r.value];
+        for(const ev of evArr){
+          if(!ev||!ev.markets)continue;
+          eventMarkets=[...eventMarkets,...ev.markets];
+        }
+      }
+    }
+
+    // also fetch broad events list
     try{
-      const [evOpen, evClosed] = await Promise.all([
+      const [evOpen,evClosed]=await Promise.all([
         get(g('/events?limit=100&closed=false&order=volume&ascending=false')),
         get(g('/events?limit=100&closed=true&order=volume&ascending=false'))
       ]);
       for(const ev of [...evOpen,...evClosed]){
-        const eq=((ev.title||'')+(ev.slug||'')+(ev.description||'')).toLowerCase();
+        const eq=((ev.title||'')+(ev.slug||'')).toLowerCase();
         if(['elon','musk','tweet'].some(k=>eq.includes(k))){
           eventMarkets=[...eventMarkets,...(ev.markets||[])];
-          if(ev.question) eventMarkets.push(ev);
         }
       }
-    }catch(e){console.warn('Events skipped:',e.message);}
-
-    // slug-based fallback search
-    let slugMarkets=[];
-    try{
-      const [s1,s2]=await Promise.all([
-        get(g('/markets?limit=100&closed=false&order=volume&ascending=false&slug=elon')),
-        get(g('/markets?limit=100&closed=false&order=volume&ascending=false&slug=musk'))
-      ]);
-      slugMarkets=[...(Array.isArray(s1)?s1:[]),...(Array.isArray(s2)?s2:[])];
-    }catch(e){}
+    }catch(e){console.warn('Broad events skipped');}
 
     // merge and deduplicate by id
     const seen=new Set();
-    markets=[...active,...closed,...eventMarkets,...slugMarkets].filter(m=>{if(seen.has(m.id))return false;seen.add(m.id);return true;});
+    markets=[...active,...closed,...eventMarkets].filter(m=>{
+      if(!m||!m.id)return false;
+      if(seen.has(m.id))return false;
+      seen.add(m.id);return true;
+    });
     active=markets.filter(m=>!m.closed);
     closed=markets.filter(m=>m.closed);
 
