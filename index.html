@@ -415,6 +415,95 @@ footer {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 
+/* Nav tabs */
+.nav-tabs { display: flex; gap: 4px; }
+.nav-tab {
+  font-size: 12px; padding: 6px 14px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text3);
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-weight: 500;
+  transition: all 0.12s;
+}
+.nav-tab:hover { color: var(--text2); }
+.nav-tab.on { background: var(--bg3); color: var(--text); border-color: var(--border2); }
+
+/* Portfolio styles */
+.page { display: none; }
+.page.active { display: block; }
+.port-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px,1fr)); gap: 10px; margin-bottom: 20px; }
+.port-stat { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
+.port-stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'DM Mono', monospace; margin-bottom: 6px; }
+.port-stat-value { font-size: 22px; font-weight: 600; letter-spacing: -0.5px; }
+.port-stat-sub { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 3px; }
+.add-bet-form {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 20px; margin-bottom: 20px;
+}
+.form-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+.form-input, .form-select {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.12s;
+}
+.form-input:focus, .form-select:focus { border-color: var(--green); }
+.form-select option { background: var(--bg3); }
+.bet-list { display: flex; flex-direction: column; gap: 8px; }
+.bet-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: grid; grid-template-columns: 1fr auto auto auto auto;
+  align-items: center; gap: 12px;
+  transition: border-color 0.12s;
+}
+.bet-card:hover { border-color: var(--border2); }
+.bet-card.win { border-left: 3px solid var(--green); }
+.bet-card.loss { border-left: 3px solid var(--red); }
+.bet-card.open { border-left: 3px solid var(--amber); }
+.bet-market { font-size: 12px; color: var(--text2); line-height: 1.4; }
+.bet-bracket { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 2px; }
+.bet-side { font-size: 11px; font-family: 'DM Mono', monospace; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+.bet-side.yes { background: var(--green-dim); color: var(--green); }
+.bet-side.no { background: var(--red-dim); color: var(--red); }
+.bet-amount { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; text-align: right; white-space: nowrap; }
+.bet-pnl { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 600; text-align: right; white-space: nowrap; min-width: 70px; }
+.bet-pnl.pos { color: var(--green); }
+.bet-pnl.neg { color: var(--red); }
+.bet-pnl.open { color: var(--amber); }
+.bet-actions { display: flex; gap: 6px; }
+.bet-btn { font-size: 11px; padding: 4px 8px; border-radius: var(--radius); border: 1px solid var(--border2); background: var(--bg3); color: var(--text3); cursor: pointer; font-family: 'DM Mono', monospace; }
+.bet-btn:hover { color: var(--text); border-color: var(--border2); }
+.bet-btn.resolve { border-color: var(--green-border); color: var(--green); }
+.bet-btn.delete { border-color: var(--red-border); color: var(--red); }
+.pnl-chart-wrap { width: 100%; height: 160px; position: relative; }
+.empty-state { text-align: center; padding: 40px; color: var(--text3); font-family: 'DM Mono', monospace; font-size: 13px; }
+.resolve-modal {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 1000; backdrop-filter: blur(4px);
+}
+.resolve-box {
+  background: var(--bg2); border: 1px solid var(--border2);
+  border-radius: var(--radius-lg); padding: 24px; width: 320px;
+}
+.resolve-title { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.resolve-btns { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 16px; }
+.r-btn { padding: 10px; border-radius: var(--radius); border: 1px solid var(--border2); background: var(--bg3); color: var(--text2); cursor: pointer; font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 600; text-align: center; }
+.r-btn.win { background: var(--green-dim); border-color: var(--green-border); color: var(--green); }
+.r-btn.loss { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
+.r-btn.cancel-r { background: var(--bg4); }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
@@ -443,15 +532,24 @@ footer {
         <div class="logo-sub">elon tweet market tracker</div>
       </div>
     </div>
-    <div class="header-right">
-      <span><span class="status-dot" id="status-dot"></span><span class="status-text" id="status-text">initialising...</span></span>
-      <button class="btn" onclick="init()">↺ Refresh</button>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <div class="nav-tabs">
+        <button class="nav-tab on" id="nav-tracker" onclick="switchPage('tracker')">Tracker</button>
+        <button class="nav-tab" id="nav-portfolio" onclick="switchPage('portfolio')">Portfolio</button>
+      </div>
+      <div class="header-right">
+        <span><span class="status-dot" id="status-dot"></span><span class="status-text" id="status-text">initialising...</span></span>
+        <button class="btn" onclick="init()">↺ Refresh</button>
+      </div>
     </div>
   </div>
 </header>
 
 <main>
 <div class="container">
+
+<!-- TRACKER PAGE -->
+<div class="page active" id="page-tracker">
 
   <!-- Market selector -->
   <div class="market-bar fade-in">
@@ -590,6 +688,83 @@ footer {
     </div>
     <div id="hist-wrap"><div class="loader"><span class="spin"></span>loading...</div></div>
   </div>
+
+</div><!-- end page-tracker -->
+
+<!-- PORTFOLIO PAGE -->
+<div class="page" id="page-portfolio">
+
+  <div class="port-stats">
+    <div class="port-stat"><div class="port-stat-label">Total P&L</div><div class="port-stat-value" id="p-total-pnl" style="color:var(--green)">$0.00</div><div class="port-stat-sub">all time</div></div>
+    <div class="port-stat"><div class="port-stat-label">Win Rate</div><div class="port-stat-value" id="p-winrate">—</div><div class="port-stat-sub">resolved bets</div></div>
+    <div class="port-stat"><div class="port-stat-label">Total Bet</div><div class="port-stat-value" id="p-total-bet">$0</div><div class="port-stat-sub">capital deployed</div></div>
+    <div class="port-stat"><div class="port-stat-label">ROI</div><div class="port-stat-value" id="p-roi">—</div><div class="port-stat-sub">return on capital</div></div>
+    <div class="port-stat"><div class="port-stat-label">Open Bets</div><div class="port-stat-value" id="p-open" style="color:var(--amber)">0</div><div class="port-stat-sub">active positions</div></div>
+    <div class="port-stat"><div class="port-stat-label">Best Trade</div><div class="port-stat-value" id="p-best" style="color:var(--green)">—</div><div class="port-stat-sub">single bet</div></div>
+  </div>
+
+  <!-- P&L Chart -->
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header"><span class="panel-title">P&L over time</span><span class="pill pill-default" id="p-chart-label">cumulative</span></div>
+    <div class="pnl-chart-wrap"><canvas id="pnl-chart" role="img" aria-label="Portfolio P&L chart">P&L chart</canvas></div>
+  </div>
+
+  <!-- Add bet form -->
+  <div class="add-bet-form">
+    <div class="panel-header" style="margin-bottom:14px">
+      <span class="panel-title">Log a bet</span>
+      <span class="pill pill-green">+ new position</span>
+    </div>
+    <div class="form-grid">
+      <div class="form-group" style="grid-column:1/-1">
+        <label class="form-label">Market</label>
+        <input class="form-input" id="f-market" placeholder="e.g. Elon Musk # tweets May 29 - June 5" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bracket / Outcome</label>
+        <input class="form-input" id="f-bracket" placeholder="e.g. 180-199" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Side</label>
+        <select class="form-select" id="f-side">
+          <option value="YES">YES</option>
+          <option value="NO">NO</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Entry price (¢)</label>
+        <input class="form-input" type="number" id="f-price" placeholder="26" min="1" max="99" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Amount ($)</label>
+        <input class="form-input" type="number" id="f-amount" placeholder="10" min="0.01" step="0.01" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Model edge (%)</label>
+        <input class="form-input" type="number" id="f-edge" placeholder="15.3" step="0.1" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Date</label>
+        <input class="form-input" type="date" id="f-date" />
+      </div>
+    </div>
+    <button class="btn-primary btn" onclick="addBet()" style="width:100%;justify-content:center;padding:10px">+ Log Bet</button>
+  </div>
+
+  <!-- Bet list -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title">Positions</span>
+      <div class="tabs">
+        <button class="tab on" id="bt-all" onclick="filterBets('all')">All</button>
+        <button class="tab" id="bt-open" onclick="filterBets('open')">Open</button>
+        <button class="tab" id="bt-closed" onclick="filterBets('closed')">Closed</button>
+      </div>
+    </div>
+    <div class="bet-list" id="bet-list"><div class="empty-state">No bets logged yet · add your first position above</div></div>
+  </div>
+
+</div><!-- end page-portfolio -->
 
 </div>
 </main>
@@ -1110,6 +1285,228 @@ function renderHistorical(){
 }
 
 init();
+
+// ============ PAGE SWITCHING ============
+function switchPage(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.getElementById('nav-'+page).classList.add('on');
+  if(page==='portfolio'){renderPortfolio();}
+}
+
+// ============ PORTFOLIO ============
+let bets=JSON.parse(localStorage.getItem('pm-bets')||'[]');
+let betFilter='all';
+let pnlChart=null;
+
+// Pre-load the first winning trade
+if(bets.length===0){
+  bets=[
+    {id:Date.now()-2,market:"Elon Musk # tweets May 22 - May 29, 2026",bracket:"180-199",side:"YES",price:26,amount:10.04,edge:15.3,date:"2026-05-29",status:"win",payout:38.26},
+    {id:Date.now()-1,market:"Elon Musk # tweets May 22 - May 29, 2026",bracket:"160-179",side:"NO",price:33,amount:10.01,edge:-6.4,date:"2026-05-29",status:"win",payout:5.09}
+  ];
+  saveBets();
+}
+
+function saveBets(){localStorage.setItem('pm-bets',JSON.stringify(bets));}
+
+function addBet(){
+  const market=document.getElementById('f-market').value.trim();
+  const bracket=document.getElementById('f-bracket').value.trim();
+  const side=document.getElementById('f-side').value;
+  const price=parseFloat(document.getElementById('f-price').value);
+  const amount=parseFloat(document.getElementById('f-amount').value);
+  const edge=parseFloat(document.getElementById('f-edge').value)||0;
+  const date=document.getElementById('f-date').value||new Date().toISOString().slice(0,10);
+
+  if(!market||!bracket||!price||!amount){alert('Please fill in all required fields');return;}
+
+  bets.unshift({id:Date.now(),market,bracket,side,price,amount,edge,date,status:'open',payout:null});
+  saveBets();
+  clearForm();
+  renderPortfolio();
+}
+
+function clearForm(){
+  ['f-market','f-bracket','f-price','f-amount','f-edge'].forEach(id=>{document.getElementById(id).value='';});
+  document.getElementById('f-date').value='';
+}
+
+function deleteBet(id){
+  if(!confirm('Delete this bet?'))return;
+  bets=bets.filter(b=>b.id!==id);
+  saveBets();
+  renderPortfolio();
+}
+
+function openResolve(id){
+  const bet=bets.find(b=>b.id===id);
+  if(!bet)return;
+  const maxPayout=(bet.amount/bet.price*100).toFixed(2);
+  const modal=document.createElement('div');
+  modal.className='resolve-modal';
+  modal.id='resolve-modal';
+  modal.innerHTML=`
+    <div class="resolve-box">
+      <div class="resolve-title">Resolve: ${bet.bracket} ${bet.side}</div>
+      <div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;margin-bottom:12px">Bet $${bet.amount} at ${bet.price}¢ · max payout $${maxPayout}</div>
+      <div class="form-group" style="margin-bottom:12px">
+        <label class="form-label">Actual payout ($)</label>
+        <input class="form-input" id="r-payout" type="number" placeholder="${maxPayout}" step="0.01" />
+      </div>
+      <div class="resolve-btns">
+        <button class="r-btn win" onclick="resolveBet(${id},'win')">✓ Won</button>
+        <button class="r-btn loss" onclick="resolveBet(${id},'loss')">✗ Lost</button>
+        <button class="r-btn cancel-r" onclick="closeModal()">Cancel</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function closeModal(){const m=document.getElementById('resolve-modal');if(m)m.remove();}
+
+function resolveBet(id,outcome){
+  const payoutEl=document.getElementById('r-payout');
+  const bet=bets.find(b=>b.id===id);
+  if(!bet)return;
+  if(outcome==='win'){
+    const payout=parseFloat(payoutEl?.value)||(bet.amount/bet.price*100);
+    bet.payout=payout;
+    bet.status='win';
+  } else {
+    bet.payout=0;
+    bet.status='loss';
+  }
+  saveBets();
+  closeModal();
+  renderPortfolio();
+}
+
+function filterBets(f){
+  betFilter=f;
+  ['all','open','closed'].forEach(t=>{document.getElementById('bt-'+t).className='tab'+(t===f?' on':'');});
+  renderBetList();
+}
+
+function renderPortfolio(){
+  renderStats();
+  renderBetList();
+  renderPnlChart();
+  // set today's date in form
+  if(!document.getElementById('f-date').value){
+    document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
+  }
+}
+
+function renderStats(){
+  const resolved=bets.filter(b=>b.status!=='open');
+  const wins=bets.filter(b=>b.status==='win');
+  const totalBet=bets.reduce((a,b)=>a+b.amount,0);
+  const totalPayout=wins.reduce((a,b)=>a+(b.payout||0),0);
+  const totalLost=bets.filter(b=>b.status==='loss').reduce((a,b)=>a+b.amount,0);
+  const pnl=totalPayout-bets.filter(b=>b.status!=='open').reduce((a,b)=>a+b.amount,0);
+  const winRate=resolved.length?wins.length/resolved.length:null;
+  const roi=totalBet>0?pnl/bets.filter(b=>b.status!=='open').reduce((a,b)=>a+b.amount,0):null;
+  const bestTrade=wins.length?Math.max(...wins.map(b=>(b.payout||0)-b.amount)):null;
+  const openCount=bets.filter(b=>b.status==='open').length;
+
+  const pnlEl=document.getElementById('p-total-pnl');
+  pnlEl.textContent=(pnl>=0?'+$':'−$')+Math.abs(pnl).toFixed(2);
+  pnlEl.style.color=pnl>=0?'var(--green)':'var(--red)';
+  document.getElementById('p-winrate').textContent=winRate!==null?(winRate*100).toFixed(0)+'%':'—';
+  document.getElementById('p-winrate').style.color=winRate>=0.6?'var(--green)':winRate<0.4?'var(--red)':'var(--text)';
+  document.getElementById('p-total-bet').textContent='$'+totalBet.toFixed(0);
+  document.getElementById('p-roi').textContent=roi!==null?(roi>=0?'+':'')+((roi||0)*100).toFixed(0)+'%':'—';
+  document.getElementById('p-roi').style.color=(roi||0)>=0?'var(--green)':'var(--red)';
+  document.getElementById('p-open').textContent=openCount;
+  document.getElementById('p-best').textContent=bestTrade!==null?'+$'+bestTrade.toFixed(2):'—';
+}
+
+function renderBetList(){
+  const filtered=bets.filter(b=>{
+    if(betFilter==='open')return b.status==='open';
+    if(betFilter==='closed')return b.status!=='open';
+    return true;
+  });
+
+  if(!filtered.length){
+    document.getElementById('bet-list').innerHTML='<div class="empty-state">No bets in this view</div>';
+    return;
+  }
+
+  document.getElementById('bet-list').innerHTML=filtered.map(b=>{
+    const pnl=b.status==='open'?null:(b.payout||0)-b.amount;
+    const pnlStr=b.status==='open'?'open':pnl>=0?'+$'+pnl.toFixed(2):'-$'+Math.abs(pnl).toFixed(2);
+    const pnlClass=b.status==='open'?'open':pnl>=0?'pos':'neg';
+    const cardClass=b.status==='open'?'open':b.status==='win'?'win':'loss';
+    const maxPayout=(b.amount/b.price*100).toFixed(0);
+    return`<div class="bet-card ${cardClass}">
+      <div>
+        <div class="bet-market">${b.market.slice(0,55)}${b.market.length>55?'...':''}</div>
+        <div class="bet-bracket">${b.bracket} · ${b.date} · edge ${b.edge>=0?'+':''}${b.edge}% · max $${maxPayout}</div>
+      </div>
+      <span class="bet-side ${b.side.toLowerCase()}">${b.side}</span>
+      <span class="bet-amount">$${b.amount.toFixed(2)}<br><span style="font-size:10px;color:var(--text3)">@${b.price}¢</span></span>
+      <span class="bet-pnl ${pnlClass}">${pnlStr}</span>
+      <div class="bet-actions">
+        ${b.status==='open'?`<button class="bet-btn resolve" onclick="openResolve(${b.id})">resolve</button>`:''}
+        <button class="bet-btn delete" onclick="deleteBet(${b.id})">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderPnlChart(){
+  if(pnlChart){pnlChart.destroy();pnlChart=null;}
+  const canvas=document.getElementById('pnl-chart');
+  if(!canvas)return;
+
+  const resolved=bets.filter(b=>b.status!=='open').sort((a,b)=>new Date(a.date)-new Date(b.date));
+  if(!resolved.length){
+    canvas.parentElement.innerHTML='<div class="empty-state">No resolved bets yet</div>';
+    return;
+  }
+
+  let cumulative=0;
+  const labels=[];const data=[];
+  for(const b of resolved){
+    const pnl=(b.payout||0)-b.amount;
+    cumulative+=pnl;
+    labels.push(b.date+' '+b.bracket);
+    data.push(parseFloat(cumulative.toFixed(2)));
+  }
+
+  pnlChart=new Chart(canvas,{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Cumulative P&L',
+      data,
+      borderColor:cumulative>=0?'#00d97e':'#ff4d4d',
+      backgroundColor:cumulative>=0?'rgba(0,217,126,0.06)':'rgba(255,77,77,0.06)',
+      borderWidth:2,fill:true,tension:0.3,
+      pointRadius:5,pointHoverRadius:7,
+      pointBackgroundColor:data.map(v=>v>=0?'#00d97e':'#ff4d4d')
+    }]},
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{
+        backgroundColor:'rgba(24,24,28,0.95)',titleColor:'#888',bodyColor:'#e8e8ea',
+        borderColor:'rgba(255,255,255,0.1)',borderWidth:1,
+        callbacks:{label:ctx=>`P&L: ${ctx.raw>=0?'+':''}$${ctx.raw}`}
+      }},
+      scales:{
+        x:{ticks:{maxTicksLimit:6,color:'#555560',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.07)'}},
+        y:{ticks:{callback:v=>(v>=0?'+$':'-$')+Math.abs(v),color:'#555560',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'},border:{color:'rgba(255,255,255,0.07)'}}
+      }
+    }
+  });
+
+  document.getElementById('p-chart-label').textContent=`$${cumulative>=0?'+':''}${cumulative.toFixed(2)} total`;
+  document.getElementById('p-chart-label').className='pill '+(cumulative>=0?'pill-green':'pill-red');
+}
+
+// ============ END PORTFOLIO ============
 </script>
 </body>
 </html>
