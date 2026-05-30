@@ -950,19 +950,34 @@ async function init(){
       'elon-musk-of-tweets-june-5-june-12',
       'elon-musk-of-tweets-june-12-june-19',
     ];
-    const allSlugs=[...new Set([...KNOWN_SLUGS,...weekSlugs()])];
+    // only fetch the most important slugs — current week + next week
+    const prioritySlugs = KNOWN_SLUGS.slice(0, 4);
 
     let eventMarkets=[];
-    setStatus('loading','fetching bracket markets by slug...');
+    setStatus('loading','fetching bracket markets...');
 
-    // fetch each slug — try both /events?slug= and /events/slug-name
-    const evResults=await Promise.allSettled(
-      allSlugs.flatMap(s=>[
-        get(g('/events?slug='+s)),
-        get(g('/events/'+s))
-      ])
-    );
-    for(const r of evResults){
+    // fetch priority slugs + broad events in parallel
+    const [evOpen, evClosed, ...slugResults] = await Promise.allSettled([
+      get(g('/events?limit=100&closed=false&order=volume&ascending=false')),
+      get(g('/events?limit=100&closed=true&order=volume&ascending=false')),
+      ...prioritySlugs.map(s => get(g('/events?slug='+s)))
+    ]);
+
+    // process broad events
+    for(const res of [evOpen, evClosed]){
+      if(res.status==='fulfilled'&&res.value){
+        const arr=Array.isArray(res.value)?res.value:[res.value];
+        for(const ev of arr){
+          const eq=((ev.title||'')+(ev.slug||'')).toLowerCase();
+          if(['elon','musk','tweet'].some(k=>eq.includes(k))){
+            eventMarkets=[...eventMarkets,...(ev.markets||[])];
+          }
+        }
+      }
+    }
+
+    // process slug results
+    for(const r of slugResults){
       if(r.status==='fulfilled'&&r.value){
         const evArr=Array.isArray(r.value)?r.value:[r.value];
         for(const ev of evArr){
@@ -972,20 +987,6 @@ async function init(){
         }
       }
     }
-
-    // broad events list as additional fallback
-    try{
-      const [evOpen,evClosed]=await Promise.all([
-        get(g('/events?limit=100&closed=false&order=volume&ascending=false')),
-        get(g('/events?limit=100&closed=true&order=volume&ascending=false'))
-      ]);
-      for(const ev of [...evOpen,...evClosed]){
-        const eq=((ev.title||'')+(ev.slug||'')).toLowerCase();
-        if(['elon','musk','tweet'].some(k=>eq.includes(k))){
-          eventMarkets=[...eventMarkets,...(ev.markets||[])];
-        }
-      }
-    }catch(e){console.warn('Broad events skipped');}
 
     // merge and deduplicate by id
     const seen=new Set();
@@ -1002,7 +1003,8 @@ async function init(){
     setStatus('loading',`${markets.length} markets · fetching price histories...`);
 
     let pts=0;
-    await Promise.all(markets.slice(0,15).map(async m=>{const h=await fetchHistory(m,'max');histories[m.id]=h;pts+=h.length;}));
+    // only prefetch top 6 markets — rest load on demand
+await Promise.all(markets.slice(0,6).map(async m=>{const h=await fetchHistory(m,'max');histories[m.id]=h;pts+=h.length;}));
     document.getElementById('m-pts').textContent=pts.toLocaleString();
 
     buildBacktest();renderTimingGrid();populatePicker();renderHistorical();
