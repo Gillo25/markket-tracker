@@ -504,6 +504,63 @@ footer {
 .r-btn.loss { background: var(--red-dim); border-color: var(--red-border); color: var(--red); }
 .r-btn.cancel-r { background: var(--bg4); }
 
+/* Alert system */
+.alert-bar {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.alert-bar label { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.alert-input {
+  width: 70px; padding: 6px 10px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text);
+  font-family: 'DM Mono', monospace;
+  font-size: 13px; text-align: center; outline: none;
+}
+.alert-input:focus { border-color: var(--green); }
+.alert-toggle {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; color: var(--text2); font-family: 'DM Mono', monospace;
+  cursor: pointer;
+}
+.toggle-track {
+  width: 36px; height: 20px; border-radius: 10px;
+  background: var(--bg4); border: 1px solid var(--border2);
+  position: relative; cursor: pointer; transition: background 0.2s;
+}
+.toggle-track.on { background: var(--green); border-color: var(--green); }
+.toggle-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--text); position: absolute;
+  top: 2px; left: 2px; transition: left 0.2s;
+}
+.toggle-track.on .toggle-thumb { left: 18px; }
+.alert-log {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 20px;
+  margin-bottom: 16px; max-height: 200px; overflow-y: auto;
+}
+.alert-entry {
+  display: flex; align-items: center; gap: 10px;
+  padding: 6px 0; border-bottom: 1px solid var(--border);
+  font-size: 12px; font-family: 'DM Mono', monospace;
+}
+.alert-entry:last-child { border-bottom: none; }
+.alert-time { color: var(--text3); white-space: nowrap; min-width: 80px; }
+.alert-msg { flex: 1; color: var(--text2); }
+.alert-edge { font-weight: 600; }
+.alert-edge.bull { color: var(--green); }
+.alert-edge.bear { color: var(--red); }
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg2); }
@@ -571,6 +628,36 @@ footer {
     </div>
     <span class="tweet-signal" id="tweet-signal">enter tweet count →</span>
     <span id="hours-left" style="display:none">12</span>
+  </div>
+
+  <!-- Alert system bar -->
+  <div class="alert-bar fade-in" id="alert-bar">
+    <div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px">Edge alerts</div>
+      <div style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">notify when model edge exceeds threshold</div>
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <label>Min edge (%)</label>
+      <input class="alert-input" type="number" id="alert-threshold" value="10" min="1" max="50" />
+    </div>
+    <div style="display:flex;align-items:center;gap:6px">
+      <label>Check every (s)</label>
+      <input class="alert-input" type="number" id="alert-interval" value="30" min="10" max="300" />
+    </div>
+    <div class="alert-toggle" onclick="toggleAlerts()">
+      <div class="toggle-track" id="alert-toggle-track"><div class="toggle-thumb"></div></div>
+      <span id="alert-toggle-label">Alerts off</span>
+    </div>
+    <span class="pill pill-default" id="alert-status">idle</span>
+  </div>
+
+  <!-- Alert log -->
+  <div class="alert-log fade-in" id="alert-log" style="display:none">
+    <div class="panel-header" style="margin-bottom:10px">
+      <span class="panel-title">Alert log</span>
+      <button class="tab" onclick="clearAlertLog()">clear</button>
+    </div>
+    <div id="alert-entries"><div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;padding:8px 0">No alerts fired yet · monitoring...</div></div>
   </div>
 
   <div class="metrics fade-in">
@@ -1285,6 +1372,148 @@ function renderHistorical(){
 }
 
 init();
+
+// ============ ALERT SYSTEM ============
+let alertActive = false;
+let alertTimer = null;
+let alertLog = [];
+let lastAlertTime = {};
+
+function toggleAlerts(){
+  if(!alertActive){
+    // request notification permission
+    if('Notification' in window && Notification.permission === 'default'){
+      Notification.requestPermission().then(p => {
+        if(p === 'granted') startAlerts();
+        else { startAlerts(); } // still run in-app alerts
+      });
+    } else { startAlerts(); }
+  } else {
+    stopAlerts();
+  }
+}
+
+function startAlerts(){
+  alertActive = true;
+  document.getElementById('alert-toggle-track').classList.add('on');
+  document.getElementById('alert-toggle-label').textContent = 'Alerts on';
+  document.getElementById('alert-status').textContent = 'monitoring';
+  document.getElementById('alert-status').className = 'pill pill-green';
+  document.getElementById('alert-log').style.display = 'block';
+  runAlertCheck();
+  scheduleNextAlert();
+}
+
+function stopAlerts(){
+  alertActive = false;
+  if(alertTimer) clearTimeout(alertTimer);
+  document.getElementById('alert-toggle-track').classList.remove('on');
+  document.getElementById('alert-toggle-label').textContent = 'Alerts off';
+  document.getElementById('alert-status').textContent = 'idle';
+  document.getElementById('alert-status').className = 'pill pill-default';
+}
+
+function scheduleNextAlert(){
+  if(!alertActive) return;
+  const interval = (parseInt(document.getElementById('alert-interval').value) || 30) * 1000;
+  alertTimer = setTimeout(() => { runAlertCheck(); scheduleNextAlert(); }, interval);
+}
+
+async function runAlertCheck(){
+  if(!markets.length) return;
+  const threshold = parseFloat(document.getElementById('alert-threshold').value) || 10;
+  document.getElementById('alert-status').textContent = 'checking...';
+
+  const toCheck = markets.filter(m => !m.closed).slice(0, 20);
+  const found = [];
+
+  for(const m of toCheck){
+    const mp = getPrice(m);
+    if(mp < 0.02 || mp > 0.98) continue;
+    const sm = {bias:0, yesPct:0.5, strength:0, label:'neutral', holders:[]};
+    const result = computeModel(m, mp, sm);
+    const edge = Math.abs(result.estimate - mp);
+    const edgePct = (edge * 100);
+
+    if(edgePct >= threshold && result.confidence >= 0.6){
+      const direction = result.estimate > mp ? 'YES underpriced' : 'YES overpriced';
+      const mktId = m.id;
+      const now = Date.now();
+
+      // debounce — only fire once per market per 5 minutes
+      if(!lastAlertTime[mktId] || now - lastAlertTime[mktId] > 300000){
+        lastAlertTime[mktId] = now;
+        found.push({m, mp, result, edge: edgePct, direction});
+      }
+    }
+  }
+
+  if(found.length > 0){
+    for(const f of found){
+      fireAlert(f.m, f.mp, f.result, f.edge, f.direction);
+    }
+  }
+
+  document.getElementById('alert-status').textContent = `last checked ${new Date().toLocaleTimeString()}`;
+  document.getElementById('alert-status').className = 'pill ' + (found.length > 0 ? 'pill-amber' : 'pill-green');
+}
+
+function fireAlert(m, mp, result, edgePct, direction){
+  const q = (m.question || '').slice(0, 60);
+  const msg = `${direction} by ${edgePct.toFixed(1)}% · ${q}`;
+  const isBull = result.estimate > mp;
+
+  // browser notification
+  if('Notification' in window && Notification.permission === 'granted'){
+    new Notification('Polymarket Edge Alert 🎯', {
+      body: msg,
+      icon: 'https://polymarket.com/favicon.ico'
+    });
+  }
+
+  // in-app alert log
+  alertLog.unshift({time: new Date().toLocaleTimeString(), msg, edgePct, isBull, market: m.question, edge: (result.estimate - mp)*100});
+  if(alertLog.length > 50) alertLog.pop();
+  renderAlertLog();
+
+  // flash the edge bar if this is the selected market
+  if(markets[selIdx] && markets[selIdx].id === m.id){
+    const bar = document.getElementById('edge-alert');
+    bar.style.boxShadow = isBull ? '0 0 20px rgba(0,217,126,0.4)' : '0 0 20px rgba(255,77,77,0.4)';
+    setTimeout(() => { if(bar) bar.style.boxShadow = ''; }, 3000);
+  }
+
+  // play subtle sound
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.frequency.value = isBull ? 880 : 440;
+    gain.gain.setValueAtTime(0.1, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+    osc.start(); osc.stop(ctx.currentTime + 0.3);
+  }catch(e){}
+}
+
+function renderAlertLog(){
+  const el = document.getElementById('alert-entries');
+  if(!alertLog.length){
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;padding:8px 0">No alerts fired yet · monitoring...</div>';
+    return;
+  }
+  el.innerHTML = alertLog.map(a => `
+    <div class="alert-entry">
+      <span class="alert-time">${a.time}</span>
+      <span class="alert-msg">${(a.market||'').slice(0,50)}</span>
+      <span class="alert-edge ${a.isBull?'bull':'bear'}">${a.isBull?'+':''}${a.edge.toFixed(1)}%</span>
+    </div>`).join('');
+}
+
+function clearAlertLog(){
+  alertLog = [];
+  renderAlertLog();
+}
 
 // ============ PAGE SWITCHING ============
 function switchPage(page){
