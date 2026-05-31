@@ -616,17 +616,27 @@ footer {
   </div>
 
   <!-- Metrics strip -->
-  <!-- Tweet count input bar -->
+  <!-- Tweet count bar with MuskMeter auto-fetch -->
   <div class="tweet-bar fade-in" id="tweet-bar">
-    <div style="display:flex;flex-direction:column;gap:3px">
+    <div style="display:flex;flex-direction:column;gap:3px;min-width:110px">
       <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.06em">Live tweet count</span>
-      <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace">from polymarket</span>
+      <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="tweet-source">manual</span>
     </div>
     <div class="tweet-input-wrap">
-      <input class="tweet-input" type="number" id="tweet-count" placeholder="153" min="0" max="2000" oninput="onTweetCount()" />
+      <input class="tweet-input" type="number" id="tweet-count" placeholder="0" min="0" max="2000" oninput="onTweetCount()" />
       <div class="tweet-range-bar" id="range-btns"></div>
     </div>
-    <span class="tweet-signal" id="tweet-signal">enter tweet count →</span>
+    <div style="display:flex;flex-direction:column;gap:5px">
+      <span class="tweet-signal" id="tweet-signal">enter count or auto-fetch →</span>
+      <div style="display:flex;gap:10px">
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="musk-projection"></span>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="musk-pace"></span>
+        <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace" id="musk-lastpost"></span>
+      </div>
+    </div>
+    <button class="btn" id="muskmeter-btn" onclick="fetchMuskMeter()" title="Auto-fetch from MuskMeter" style="font-size:11px;padding:6px 12px;white-space:nowrap;border-color:var(--green-border);color:var(--green)">
+      ⚡ MuskMeter
+    </button>
     <span id="hours-left" style="display:none">12</span>
   </div>
 
@@ -1391,6 +1401,95 @@ function renderHistorical(){
 
 init();
 
+// ============ MUSKMETER AUTO-FETCH ============
+let muskMeterTimer = null;
+let lastMuskFetch = null;
+
+function getCurrentEventParams(){
+  // find the active market and extract its date range
+  const m = markets[selIdx];
+  if(!m) return null;
+  
+  // try to get start/end from market dates
+  const start = m.startDate || m.startDateIso;
+  const end = m.endDate || m.endDateIso;
+  
+  // use the known current event params from the URL pattern
+  // May 29 - June 5, 2026 = 1748476800 to 1749081600
+  const now = Math.floor(Date.now()/1000);
+  
+  // find nearest thursday boundary (polymarket weeks run thursday to thursday)
+  const d = new Date();
+  const day = d.getDay(); // 0=sun, 4=thu
+  const daysToLastThurs = (day + 3) % 7; // days since last thursday
+  const lastThurs = new Date(d);
+  lastThurs.setDate(d.getDate() - daysToLastThurs);
+  lastThurs.setHours(0,0,0,0);
+  
+  const nextThurs = new Date(lastThurs);
+  nextThurs.setDate(lastThurs.getDate() + 7);
+  
+  return {
+    start: Math.floor(lastThurs.getTime()/1000),
+    end: Math.floor(nextThurs.getTime()/1000),
+  };
+}
+
+async function fetchMuskMeter(){
+  const btn = document.getElementById('muskmeter-btn');
+  const srcEl = document.getElementById('tweet-source');
+  btn.textContent = '⚡ fetching...';
+  btn.style.opacity = '0.6';
+  
+  try{
+    const params = getCurrentEventParams();
+    if(!params){ btn.textContent='⚡ MuskMeter'; btn.style.opacity='1'; return; }
+    
+    // use our vercel proxy to fetch muskmeter data
+    const url = `/api/muskmeter?start=${params.start}&end=${params.end}&eventId=515567`;
+    const r = await fetch(url);
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    const data = await r.json();
+    
+    lastMuskFetch = data;
+    
+    // Update tweet count if we got a valid total
+    const total = data.eventTotal || 0;
+    if(total > 0){
+      document.getElementById('tweet-count').value = total;
+      srcEl.textContent = '⚡ muskmeter live';
+      srcEl.style.color = 'var(--green)';
+      onTweetCount();
+    }
+    
+    // Update projection display
+    if(data.projection){
+      document.getElementById('musk-projection').textContent = `proj: ${data.projection}`;
+    }
+    if(data.avgPerDay){
+      document.getElementById('musk-pace').textContent = `avg ${data.avgPerDay}/day`;
+    }
+    if(data.lastPost){
+      document.getElementById('musk-lastpost').textContent = `last: ${data.lastPost}`;
+    }
+    
+    btn.textContent = '⚡ MuskMeter ✓';
+    btn.style.color = 'var(--green)';
+    
+    // schedule next auto-refresh in 60s
+    if(muskMeterTimer) clearTimeout(muskMeterTimer);
+    muskMeterTimer = setTimeout(fetchMuskMeter, 60000);
+    
+  }catch(e){
+    console.warn('MuskMeter fetch failed:', e.message);
+    srcEl.textContent = 'manual (auto failed)';
+    btn.textContent = '⚡ retry';
+    btn.style.opacity = '1';
+  }
+  
+  btn.style.opacity = '1';
+}
+
 // ============ ALERT SYSTEM ============
 let alertActive = false;
 let alertTimer = null;
@@ -1517,7 +1616,7 @@ function fireAlert(m, mp, result, edgePct, direction){
 function renderAlertLog(){
   const el = document.getElementById('alert-entries');
   if(!alertLog.length){
-    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;padding:8px 0">No alerts fired yet · monitoring...</div>';
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-family:monospace;padding:8px 0">No alerts fired yet · monitoring...</div>';
     return;
   }
   el.innerHTML = alertLog.map(a => `
