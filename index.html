@@ -657,7 +657,7 @@ footer {
       <span class="panel-title">Alert log</span>
       <button class="tab" onclick="clearAlertLog()">clear</button>
     </div>
-    <div id="alert-entries"><div style="font-size:12px;color:var(--text3);font-family:monospace;padding:8px 0">No alerts fired yet · monitoring...</div></div>
+    <div id="alert-entries"><div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;padding:8px 0">No alerts fired yet · monitoring...</div></div>
   </div>
 
   <div class="metrics fade-in">
@@ -884,13 +884,14 @@ const fmt=n=>n>=1e6?'$'+(n/1e6).toFixed(1)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K'
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 async function get(url){
-  // if it's a proxied URL, extract original and retry with fallback proxies
+  // route gamma and data API calls through our own vercel proxy
   if(url.includes('gamma-api.polymarket.com')||url.includes('data-api.polymarket.com')){
     return tryProxies(url);
   }
+  // clob.polymarket.com supports CORS directly
   const r=await Promise.race([
     fetch(url),
-    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000))
   ]);
   if(!r.ok)throw new Error('HTTP '+r.status);
   return r.json();
@@ -1516,7 +1517,7 @@ function fireAlert(m, mp, result, edgePct, direction){
 function renderAlertLog(){
   const el = document.getElementById('alert-entries');
   if(!alertLog.length){
-    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-family:monospace;padding:8px 0">No alerts fired yet · monitoring...</div>';
+    el.innerHTML = '<div style="font-size:12px;color:var(--text3);font-family:'DM Mono',monospace;padding:8px 0">No alerts fired yet · monitoring...</div>';
     return;
   }
   el.innerHTML = alertLog.map(a => `
