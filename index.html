@@ -886,12 +886,7 @@ const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 async function get(url){
   // if it's a proxied URL, extract original and retry with fallback proxies
   if(url.includes('gamma-api.polymarket.com')||url.includes('data-api.polymarket.com')){
-    return tryProxies(url.includes('?url=')
-      ? decodeURIComponent(url.split('?url=')[1])
-      : url.includes('corsproxy.io')
-        ? decodeURIComponent(url.split('corsproxy.io/?')[1])
-        : url
-    );
+    return tryProxies(url);
   }
   const r=await Promise.race([
     fetch(url),
