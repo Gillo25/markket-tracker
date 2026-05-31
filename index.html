@@ -863,10 +863,18 @@ footer {
 </footer>
 
 <script>
-const PROXY='https://corsproxy.io/?';
-const GAMMA=PROXY+encodeURIComponent('https://gamma-api.polymarket.com');
+// Use our own Vercel proxy — no CORS issues, fast, reliable
 const CLOB='https://clob.polymarket.com';
-const DATA=PROXY+encodeURIComponent('https://data-api.polymarket.com');
+const OWN_PROXY='/api/proxy?url=';
+
+async function tryProxies(url){
+  const r=await Promise.race([
+    fetch(OWN_PROXY+encodeURIComponent(url)),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),10000))
+  ]);
+  if(!r.ok) throw new Error('Proxy HTTP '+r.status);
+  return r.json();
+}
 
 let markets=[], closed=[], active=[], histories={}, chartInst=null, curInt='1w', selIdx=0, modelCache={};
 
@@ -876,7 +884,19 @@ const fmt=n=>n>=1e6?'$'+(n/1e6).toFixed(1)+'M':n>=1e3?'$'+(n/1e3).toFixed(1)+'K'
 const DAYS=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 async function get(url){
-  const r=await fetch(url);
+  // if it's a proxied URL, extract original and retry with fallback proxies
+  if(url.includes('gamma-api.polymarket.com')||url.includes('data-api.polymarket.com')){
+    return tryProxies(url.includes('?url=')
+      ? decodeURIComponent(url.split('?url=')[1])
+      : url.includes('corsproxy.io')
+        ? decodeURIComponent(url.split('corsproxy.io/?')[1])
+        : url
+    );
+  }
+  const r=await Promise.race([
+    fetch(url),
+    new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),8000))
+  ]);
   if(!r.ok)throw new Error('HTTP '+r.status);
   return r.json();
 }
@@ -898,7 +918,7 @@ async function fetchHistory(m,interval){
 }
 async function fetchHolders(m){
   if(!m.conditionId)return[];
-  try{const d=await get(PROXY+encodeURIComponent(`https://data-api.polymarket.com/holders?market=${m.conditionId}&limit=20`));return Array.isArray(d)?d:[];}
+  try{const d=await get(`https://data-api.polymarket.com/holders?market=${m.conditionId}&limit=20`);return Array.isArray(d)?d:[];}
   catch(e){return[];}
 }
 
@@ -911,7 +931,7 @@ function setStatus(state,text){
 async function init(){
   setStatus('loading','connecting to polymarket...');
   try{
-    const g=(path)=>PROXY+encodeURIComponent('https://gamma-api.polymarket.com'+path);
+    const g=(path)=>'https://gamma-api.polymarket.com'+path;
 
     // generate slugs for current + recent weeks
     function weekSlugs(){
