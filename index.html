@@ -1449,6 +1449,54 @@ function renderHistorical(){
 
 init();
 
+// ============ CREATOR SWITCHER ============
+let currentCreator = 'elon';
+
+const CREATORS = {
+  elon: {
+    name: 'Elon Musk',
+    platform: 'X (Twitter)',
+    slugPrefix: 'elon-musk-of-tweets',
+    keywords: ['elon','musk','tweet'],
+    stats: 'tweets on X · weekly bracket market',
+    months: ['january','february','march','april','may','june','july','august','september','october','november','december']
+  },
+  trump: {
+    name: 'Donald Trump',
+    platform: 'Truth Social',
+    slugPrefix: 'donald-trump-of-truth-social-posts',
+    keywords: ['trump','truth social','donald'],
+    stats: 'posts on Truth Social · weekly bracket market',
+    months: ['january','february','march','april','may','june','july','august','september','october','november','december']
+  }
+};
+
+function switchCreator(creator){
+  currentCreator = creator;
+
+  document.getElementById('btn-elon').className = 'creator-btn elon' + (creator==='elon'?' active':'');
+  document.getElementById('btn-trump').className = 'creator-btn trump' + (creator==='trump'?' active':'');
+  document.getElementById('creator-stats').textContent = CREATORS[creator].stats;
+
+  const tweetSource = document.getElementById('tweet-source');
+  if(tweetSource) tweetSource.textContent = 'manual';
+
+  const mBtn = document.getElementById('muskmeter-btn');
+  if(mBtn) mBtn.textContent = creator==='elon' ? 'Auto-fetch MuskMeter' : 'Auto-fetch TrumpMeter';
+
+  markets=[];closed=[];active=[];histories={};
+  document.getElementById('mpick').innerHTML = '<option>Loading...</option>';
+  document.getElementById('tweet-count').value = '';
+  const sigEl = document.getElementById('tweet-signal');
+  if(sigEl) sigEl.textContent = 'enter count or auto-fetch';
+  const projEl = document.getElementById('musk-projection');
+  if(projEl) projEl.textContent = '';
+  const paceEl = document.getElementById('musk-pace');
+  if(paceEl) paceEl.textContent = '';
+
+  init();
+}
+
 // ============ MUSKMETER AUTO-FETCH ============
 let muskMeterTimer = null;
 let lastMuskFetch = null;
