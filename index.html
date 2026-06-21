@@ -1013,19 +1013,32 @@ async function init(){
     function makeSlug(d1, d2){
       return prefix+'-'+months[d1.getMonth()]+'-'+d1.getDate()+'-'+months[d2.getMonth()]+'-'+d2.getDate();
     }
-    const baseDate = new Date();
+
+    // verified known-good slugs as extra safety net (updated periodically)
+    const HARDCODED_SAFETY = currentCreator==='elon' ? [
+      'elon-musk-of-tweets-june-19-june-26',
+      'elon-musk-of-tweets-june-12-june-19',
+      'elon-musk-of-tweets-june-5-june-12',
+    ] : [
+      'donald-trump-of-truth-social-posts-june-19-june-26',
+      'donald-trump-of-truth-social-posts-june-12-june-19',
+    ];
+    // anchor to the most recent Friday — Polymarket weekly markets start on Fridays
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0=Sun,1=Mon,...5=Fri,6=Sat
+    const daysSinceFriday = (dayOfWeek + 2) % 7; // Fri=5 -> 0, Sat=6 -> 1, Sun=0 -> 2, etc
+    const lastFriday = new Date(today);
+    lastFriday.setDate(today.getDate() - daysSinceFriday);
+    lastFriday.setHours(0,0,0,0);
+
     const KNOWN_SLUGS = [];
-    for(let w=-8; w<=4; w++){
-      const d1=new Date(baseDate); d1.setDate(baseDate.getDate()+w*7);
+    for(let w=-8; w<=2; w++){
+      const d1=new Date(lastFriday); d1.setDate(lastFriday.getDate()+w*7);
       const d2=new Date(d1); d2.setDate(d1.getDate()+7);
       KNOWN_SLUGS.push(makeSlug(d1,d2));
-      // also try reversed month order just in case
-      if(d1.getMonth()!==d2.getMonth()){
-        KNOWN_SLUGS.push(prefix+'-'+months[d1.getMonth()]+'-'+d1.getDate()+'-'+months[d1.getMonth()]+'-'+d2.getDate());
-      }
     }
-    // only fetch the most important slugs — current week + next week
-    const prioritySlugs = KNOWN_SLUGS.slice(0, 4);
+    // fetch ALL generated slugs + hardcoded safety net, deduplicated
+    const prioritySlugs = [...new Set([...HARDCODED_SAFETY, ...KNOWN_SLUGS])];
 
     let eventMarkets=[];
     setStatus('loading','fetching bracket markets...');
