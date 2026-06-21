@@ -415,6 +415,35 @@ footer {
 @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 .fade-in { animation: fadeIn 0.3s ease forwards; }
 
+/* Creator switcher */
+.creator-bar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+.creator-btn {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 14px;
+  border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: var(--bg3);
+  color: var(--text2);
+  cursor: pointer;
+  font-family: 'DM Mono', monospace;
+  font-size: 12px;
+  font-weight: 500;
+  transition: all 0.15s;
+}
+.creator-btn:hover { color: var(--text); border-color: var(--border2); }
+.creator-btn.active { background: var(--bg4); color: var(--text); border-color: var(--border2); }
+.creator-btn.elon.active { border-color: var(--green-border); color: var(--green); background: var(--green-dim); }
+.creator-btn.trump.active { border-color: rgba(255,77,77,0.3); color: var(--red); background: var(--red-dim); }
+.creator-avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--bg4); display:flex;align-items:center;justify-content:center;font-size:11px; }
+.creator-stats { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; margin-left: auto; }
+
 /* Nav tabs */
 .nav-tabs { display: flex; gap: 4px; }
 .nav-tab {
@@ -607,6 +636,18 @@ footer {
 
 <!-- TRACKER PAGE -->
 <div class="page active" id="page-tracker">
+
+  <!-- Creator switcher -->
+  <div class="creator-bar fade-in" id="creator-bar">
+    <span style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:0.06em">Creator</span>
+    <button class="creator-btn elon active" id="btn-elon" onclick="switchCreator('elon')">
+      <span class="creator-avatar">🐦</span> Elon Musk
+    </button>
+    <button class="creator-btn trump" id="btn-trump" onclick="switchCreator('trump')">
+      <span class="creator-avatar">🇺🇸</span> Trump
+    </button>
+    <span class="creator-stats" id="creator-stats">tweets on X · weekly bracket market</span>
+  </div>
 
   <!-- Market selector -->
   <div class="market-bar fade-in">
@@ -960,22 +1001,30 @@ async function init(){
       get(g('/markets?limit=100&closed=false&order=volume&ascending=false')),
       get(g('/markets?limit=100&closed=true&order=createdAt&ascending=false'))
     ]);
-    const filt=m=>{const q=((m.question||'')+(m.slug||'')).toLowerCase();return['elon','musk','tweet'].some(k=>q.includes(k));};
+    const creator = CREATORS[currentCreator];
+    const filt=m=>{const q=((m.question||'')+(m.slug||'')).toLowerCase();return creator.keywords.some(k=>q.includes(k));};
     active=openD.filter(filt);closed=closedD.filter(filt);
 
     // hardcoded known slugs + dynamically generated ones
-    const KNOWN_SLUGS=[
-      'elon-musk-of-tweets-may-22-may-29',
-      'elon-musk-of-tweets-may-29-june-5',
-      'elon-musk-of-tweets-may-15-may-22',
-      'elon-musk-of-tweets-may-8-may-15',
-      'elon-musk-of-tweets-may-1-may-8',
-      'elon-musk-of-tweets-april-24-may-1',
-      'elon-musk-of-tweets-april-17-april-24',
-      'elon-musk-of-tweets-april-10-april-17',
-      'elon-musk-of-tweets-june-5-june-12',
-      'elon-musk-of-tweets-june-12-june-19',
-    ];
+    const creator = CREATORS[currentCreator];
+    const prefix = creator.slugPrefix;
+    const months = creator.months;
+
+    // build known slugs for current + surrounding weeks
+    function makeSlug(d1, d2){
+      return prefix+'-'+months[d1.getMonth()]+'-'+d1.getDate()+'-'+months[d2.getMonth()]+'-'+d2.getDate();
+    }
+    const baseDate = new Date();
+    const KNOWN_SLUGS = [];
+    for(let w=-8; w<=4; w++){
+      const d1=new Date(baseDate); d1.setDate(baseDate.getDate()+w*7);
+      const d2=new Date(d1); d2.setDate(d1.getDate()+7);
+      KNOWN_SLUGS.push(makeSlug(d1,d2));
+      // also try reversed month order just in case
+      if(d1.getMonth()!==d2.getMonth()){
+        KNOWN_SLUGS.push(prefix+'-'+months[d1.getMonth()]+'-'+d1.getDate()+'-'+months[d1.getMonth()]+'-'+d2.getDate());
+      }
+    }
     // only fetch the most important slugs — current week + next week
     const prioritySlugs = KNOWN_SLUGS.slice(0, 4);
 
@@ -995,7 +1044,7 @@ async function init(){
         const arr=Array.isArray(res.value)?res.value:[res.value];
         for(const ev of arr){
           const eq=((ev.title||'')+(ev.slug||'')).toLowerCase();
-          if(['elon','musk','tweet'].some(k=>eq.includes(k))){
+          if(creator.keywords.some(k=>eq.includes(k))){
             eventMarkets=[...eventMarkets,...(ev.markets||[])];
           }
         }
@@ -1445,8 +1494,10 @@ async function fetchMuskMeter(){
     const params = getCurrentEventParams();
     if(!params){ btn.textContent='⚡ MuskMeter'; btn.style.opacity='1'; return; }
     
-    // use our vercel proxy to fetch muskmeter data
-    const url = `/api/muskmeter?start=${params.start}&end=${params.end}&eventId=515567`;
+    // use creator-specific endpoint
+    const endpoint = currentCreator==='trump' ? '/api/trumpmeter' : '/api/muskmeter';
+    const eventId = currentCreator==='trump' ? '516000' : '515567';
+    const url = `${endpoint}?start=${params.start}&end=${params.end}&eventId=${eventId}`;
     const r = await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data = await r.json();
