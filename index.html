@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Polymarket · Elon Tweet Predictor</title>
+<title>PICK · Polymarket Edge Tracker</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
@@ -595,15 +595,97 @@ footer {
 ::-webkit-scrollbar-track { background: var(--bg2); }
 ::-webkit-scrollbar-thumb { background: var(--bg4); border-radius: 3px; }
 
+/* ===== Politics page ===== */
+.pol-intro {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 14px 20px; margin-bottom: 16px;
+  font-size: 12px; color: var(--text2); line-height: 1.6;
+}
+.pol-intro b { color: var(--text); }
+.pol-filter-bar {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.pol-filter-bar input[type="text"] {
+  flex: 1; min-width: 180px;
+  padding: 8px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border2); background: var(--bg3); color: var(--text);
+  font-family: 'Syne', sans-serif; font-size: 13px; outline: none;
+}
+.pol-filter-bar input[type="text"]:focus { border-color: var(--purple); }
+.pol-list { display: flex; flex-direction: column; gap: 10px; }
+.pol-card {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  cursor: pointer; transition: border-color 0.15s;
+}
+.pol-card:hover { border-color: var(--purple); }
+.pol-card.expanded { border-color: var(--purple); background: var(--bg3); }
+.pol-card-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.pol-q { font-size: 13px; color: var(--text); line-height: 1.4; flex: 1; }
+.pol-meta { display: flex; gap: 10px; margin-top: 8px; flex-wrap: wrap; }
+.pol-tag { font-size: 10px; padding: 3px 8px; border-radius: 20px; font-family: 'DM Mono', monospace; background: var(--bg4); color: var(--text3); border: 1px solid var(--border); }
+.pol-price { font-family: 'DM Mono', monospace; font-size: 20px; font-weight: 600; white-space: nowrap; color: var(--text); }
+.pol-price-sub { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; text-align: right; margin-top: 2px; }
+.pol-detail { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: none; }
+.pol-card.expanded .pol-detail { display: block; }
+.pol-estimate-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; margin-bottom: 14px; }
+.pol-slider-wrap { flex: 1; min-width: 200px; }
+.pol-slider { width: 100%; height: 5px; border-radius: 3px; background: var(--bg4); outline: none; -webkit-appearance: none; accent-color: var(--purple); cursor: pointer; }
+.pol-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--purple); cursor: pointer; box-shadow: 0 0 0 3px rgba(155,143,255,0.2); }
+.pol-est-val { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 700; color: var(--purple); min-width: 56px; text-align: right; }
+.pol-edge-readout { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+.pol-edge-chip { flex: 1; min-width: 110px; background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 12px; }
+.pol-edge-chip-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.05em; font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+.pol-edge-chip-val { font-size: 16px; font-weight: 600; font-family: 'DM Mono', monospace; }
+.pol-disclaimer { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; line-height: 1.5; padding: 8px 10px; background: var(--bg4); border-radius: var(--radius); margin-top: 4px; }
+
+/* ===== Stake sizing widget (shared) ===== */
+.stake-box {
+  background: var(--bg3); border: 1px solid var(--border2);
+  border-radius: var(--radius); padding: 14px 16px; margin-top: 10px;
+}
+.stake-box-title { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'DM Mono', monospace; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+.stake-inputs { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.stake-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 90px; }
+.stake-field label { font-size: 9px; color: var(--text3); font-family: 'DM Mono', monospace; text-transform: uppercase; }
+.stake-field input, .stake-field select {
+  padding: 6px 10px; border-radius: var(--radius); border: 1px solid var(--border2);
+  background: var(--bg2); color: var(--text); font-family: 'DM Mono', monospace;
+  font-size: 12px; outline: none;
+}
+.stake-field input:focus, .stake-field select:focus { border-color: var(--purple); }
+.stake-result { display: flex; align-items: center; gap: 16px; padding: 10px 12px; background: var(--bg2); border-radius: var(--radius); border: 1px solid var(--border); }
+.stake-result-amt { font-size: 26px; font-weight: 700; font-family: 'DM Mono', monospace; color: var(--green); }
+.stake-result-meta { font-size: 11px; color: var(--text3); font-family: 'DM Mono', monospace; line-height: 1.5; }
+.stake-warn { font-size: 11px; color: var(--amber); font-family: 'DM Mono', monospace; margin-top: 6px; }
+
+/* ===== Monthly KPI tracker ===== */
+.month-tabs { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 16px; }
+.month-tab {
+  font-size: 11px; padding: 6px 12px; border-radius: var(--radius);
+  border: 1px solid var(--border); background: var(--bg3); color: var(--text3);
+  cursor: pointer; font-family: 'DM Mono', monospace; transition: all 0.12s;
+}
+.month-tab:hover { color: var(--text2); border-color: var(--border2); }
+.month-tab.on { background: var(--bg4); color: var(--text); border-color: var(--purple); }
+.month-summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.month-summary-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 14px; }
+.month-summary-label { font-size: 9px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; font-family: 'DM Mono', monospace; margin-bottom: 5px; }
+.month-summary-val { font-size: 19px; font-weight: 600; font-family: 'DM Mono', monospace; letter-spacing: -0.3px; }
+
 /* Responsive */
 @media (max-width: 800px) {
   .sig-grid { grid-template-columns: repeat(3, 1fr); }
   .grid-3 { grid-template-columns: 1fr; }
   .grid-2 { grid-template-columns: 1fr; }
+  .pol-card-top { flex-direction: column; }
+  .pol-price-sub { text-align: left; }
 }
 @media (max-width: 520px) {
   .sig-grid { grid-template-columns: repeat(2, 1fr); }
   .metrics { grid-template-columns: repeat(2, 1fr); }
+  .stake-inputs { flex-direction: column; }
 }
 </style>
 </head>
@@ -614,13 +696,14 @@ footer {
     <div class="logo">
       <div class="logo-mark">P</div>
       <div>
-        <div class="logo-text">Polymarket Predictor</div>
-        <div class="logo-sub">elon tweet market tracker</div>
+        <div class="logo-text">PICK</div>
+        <div class="logo-sub">probability · identify · calculate · kpi-track</div>
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
       <div class="nav-tabs">
-        <button class="nav-tab on" id="nav-tracker" onclick="switchPage('tracker')">Tracker</button>
+        <button class="nav-tab on" id="nav-tracker" onclick="switchPage('tracker')">Brackets</button>
+        <button class="nav-tab" id="nav-politics" onclick="switchPage('politics')">Politics</button>
         <button class="nav-tab" id="nav-portfolio" onclick="switchPage('portfolio')">Portfolio</button>
       </div>
       <div class="header-right">
@@ -757,6 +840,7 @@ footer {
       <span class="edge-icon">◈</span>
       <span id="edge-txt">Select a market to compute the prediction signal</span>
     </div>
+    <div class="stake-box" id="bracket-stake"></div>
   </div>
 
   <!-- Row 1: factors / holders / score -->
@@ -829,7 +913,24 @@ footer {
 
 </div><!-- end page-tracker -->
 
-<!-- PORTFOLIO PAGE -->
+<!-- POLITICS / NEWS PAGE -->
+<div class="page" id="page-politics">
+
+  <div class="pol-intro fade-in">
+    <b>How this page works:</b> these are general politics/news markets — there's no historical base rate to model, so PICK doesn't generate a fake prediction here. Instead, read the market, form your own probability estimate, and the slider below shows your edge vs. the market price plus a suggested stake size. The judgment call is yours; PICK just does the math.
+  </div>
+
+  <div class="pol-filter-bar fade-in">
+    <input type="text" id="pol-search" placeholder="Filter markets (e.g. election, fed, ukraine)..." oninput="renderPoliticsList()" />
+    <span class="pill pill-default" id="pol-status">loading...</span>
+    <button class="btn" onclick="loadPoliticsMarkets()">↺ Refresh</button>
+  </div>
+
+  <div class="pol-list" id="pol-list">
+    <div class="loader"><span class="spin"></span>fetching politics &amp; news markets...</div>
+  </div>
+
+</div><!-- end page-politics -->
 <div class="page" id="page-portfolio">
 
   <div class="port-stats">
@@ -845,6 +946,16 @@ footer {
   <div class="panel" style="margin-bottom:16px">
     <div class="panel-header"><span class="panel-title">P&L over time</span><span class="pill pill-default" id="p-chart-label">cumulative</span></div>
     <div class="pnl-chart-wrap"><canvas id="pnl-chart" role="img" aria-label="Portfolio P&L chart">P&L chart</canvas></div>
+  </div>
+
+  <!-- Monthly KPI tracker -->
+  <div class="panel" style="margin-bottom:16px">
+    <div class="panel-header">
+      <span class="panel-title">Monthly performance</span>
+      <span class="pill pill-default" id="month-pill">—</span>
+    </div>
+    <div class="month-tabs" id="month-tabs"></div>
+    <div class="month-summary-grid" id="month-summary"></div>
   </div>
 
   <!-- Add bet form -->
@@ -909,7 +1020,7 @@ footer {
 
 <footer>
   <div class="container">
-    polymarket predictor · data via gamma-api.polymarket.com · clob.polymarket.com · data-api.polymarket.com · not financial advice
+    PICK · probability · identify · calculate · kpi-track · data via gamma-api.polymarket.com · clob.polymarket.com · data-api.polymarket.com · not financial advice
   </div>
 </footer>
 
@@ -1327,6 +1438,11 @@ function renderSignals(m,mp,r,sm){
   if(Math.abs(edge)<0.025){ea.className='edge-alert neutral';et.textContent='Market is fairly priced — model finds no meaningful edge';}
   else if(edge>0){ea.className='edge-alert bull';et.textContent=`YES underpriced by ~${ep}% — model suggests long edge · consider buying YES shares`;}
   else{ea.className='edge-alert bear';et.textContent=`YES overpriced by ~${ep}% — model suggests short edge · consider buying NO shares`;}
+
+  // stake sizing: orient toward whichever side the model favors
+  const stakePriceCents = edge>=0 ? mp*100 : (1-mp)*100;
+  const stakeProb = edge>=0 ? r.estimate : 1-r.estimate;
+  renderStakeWidget('bracket-stake', stakeProb, stakePriceCents);
 }
 
 function renderFactors(m,mp,r,sm){
@@ -1750,6 +1866,197 @@ function switchPage(page){
   document.getElementById('page-'+page).classList.add('active');
   document.getElementById('nav-'+page).classList.add('on');
   if(page==='portfolio'){renderPortfolio();}
+  if(page==='politics' && politicsMarkets.length===0){loadPoliticsMarkets();}
+}
+
+// ============ STAKE SIZING ENGINE (shared: brackets + politics) ============
+// Conservative fractional-Kelly. Bankroll defaults to $200 (~CHF 200, Polymarket settles in USD),
+// editable per-calculation. We cap at quarter-Kelly and hard-cap at 15% of bankroll per bet
+// because small bankrolls can't survive full-Kelly variance on noisy edge estimates.
+function kellyFraction(pWin, priceCents, fractionMode){
+  const price = priceCents/100; // cost to buy 1 share of YES (or NO) in dollars-equivalent
+  if(price<=0||price>=1||pWin<=0||pWin>=1) return 0;
+  const b = (1-price)/price; // net odds received per unit staked
+  const q = 1-pWin;
+  const fullKelly = (pWin*b - q)/b;
+  const mult = fractionMode==='quarter'?0.25:fractionMode==='half'?0.5:1;
+  return Math.max(0, fullKelly*mult);
+}
+
+function renderStakeWidget(containerId, modelProb, marketPriceCents, ctx){
+  const el=document.getElementById(containerId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="stake-box-title">
+      <span>Stake sizing</span>
+      <span class="pill pill-default" style="font-size:9px">fractional kelly</span>
+    </div>
+    <div class="stake-inputs">
+      <div class="stake-field"><label>Bankroll ($)</label><input type="number" id="${containerId}-bankroll" value="200" min="1" step="1" oninput="updateStakeWidget('${containerId}',${modelProb},${marketPriceCents})" /></div>
+      <div class="stake-field"><label>Kelly fraction</label>
+        <select id="${containerId}-frac" onchange="updateStakeWidget('${containerId}',${modelProb},${marketPriceCents})">
+          <option value="quarter" selected>Quarter (safer)</option>
+          <option value="half">Half</option>
+          <option value="full">Full (risky)</option>
+        </select>
+      </div>
+    </div>
+    <div class="stake-result" id="${containerId}-result"></div>
+    <div class="stake-warn" id="${containerId}-warn"></div>
+  `;
+  updateStakeWidget(containerId, modelProb, marketPriceCents);
+}
+
+function updateStakeWidget(containerId, pWin, priceCents){
+  const bankroll = parseFloat(document.getElementById(containerId+'-bankroll')?.value)||200;
+  const frac = document.getElementById(containerId+'-frac')?.value||'quarter';
+  let kelly = kellyFraction(pWin, priceCents, frac);
+  const HARD_CAP = 0.15; // never suggest more than 15% of bankroll on one bet, regardless of Kelly output
+  const capped = Math.min(kelly, HARD_CAP);
+  const stake = bankroll*capped;
+  const resEl = document.getElementById(containerId+'-result');
+  const warnEl = document.getElementById(containerId+'-warn');
+  if(!resEl) return;
+  if(kelly<=0){
+    resEl.innerHTML = `<div class="stake-result-amt" style="color:var(--text3)">$0</div><div class="stake-result-meta">No edge at this price/probability —<br>Kelly says don't bet.</div>`;
+    warnEl.textContent='';
+    return;
+  }
+  resEl.innerHTML = `<div class="stake-result-amt">$${stake.toFixed(2)}</div><div class="stake-result-meta">${(capped*100).toFixed(1)}% of bankroll<br>raw Kelly: ${(kelly*100).toFixed(1)}%</div>`;
+  warnEl.textContent = kelly>HARD_CAP ? `⚠ Kelly suggested ${(kelly*100).toFixed(0)}% — capped at 15% to limit variance on a small bankroll.` : '';
+}
+
+// ============ POLITICS / NEWS MARKETS ============
+let politicsMarkets = [];
+let politicsEstimates = {}; // id -> user-entered probability (0-1)
+let politicsExpanded = null;
+
+const POLITICS_TAGS = ['politics','elections','geopolitics','world','fed','economy','ukraine-russia','middle-east'];
+
+async function loadPoliticsMarkets(){
+  const statusEl=document.getElementById('pol-status');
+  statusEl.textContent='loading...';
+  const g=(path)=>'https://gamma-api.polymarket.com'+path;
+  try{
+    // pull active markets sorted by volume, then filter to exclude the creator-tweet
+    // bracket markets we already cover on the Brackets tab, and keep general news/politics ones
+    const results = await Promise.allSettled(
+      POLITICS_TAGS.map(tag=>get(g(`/markets?limit=40&closed=false&order=volume&ascending=false&tag=${tag}`)))
+    );
+    let pool=[];
+    for(const r of results){
+      if(r.status==='fulfilled' && Array.isArray(r.value)) pool=[...pool,...r.value];
+    }
+    // fallback: if tag filtering returns nothing (tag slugs vary), pull general high-volume markets
+    if(pool.length===0){
+      const fallback = await get(g('/markets?limit=80&closed=false&order=volume&ascending=false'));
+      pool = Array.isArray(fallback)?fallback:[];
+    }
+    const excludeKeywords=['elon','musk','trump truth social','of tweets'];
+    const seen=new Set();
+    politicsMarkets = pool.filter(m=>{
+      if(!m||!m.id||seen.has(m.id))return false;
+      const q=((m.question||'')+(m.slug||'')).toLowerCase();
+      if(excludeKeywords.some(k=>q.includes(k)))return false; // keep these on the Brackets tab only
+      seen.add(m.id);
+      return true;
+    }).sort((a,b)=>parseFloat(b.volumeNum||b.volume||0)-parseFloat(a.volumeNum||a.volume||0)).slice(0,60);
+
+    statusEl.textContent=`${politicsMarkets.length} markets`;
+    renderPoliticsList();
+  }catch(e){
+    statusEl.textContent='error loading';
+    document.getElementById('pol-list').innerHTML=`<div class="loader">Couldn't load politics markets: ${e.message}</div>`;
+  }
+}
+
+function renderPoliticsList(){
+  const search=(document.getElementById('pol-search')?.value||'').toLowerCase();
+  const filtered = politicsMarkets.filter(m=>{
+    if(!search) return true;
+    return ((m.question||'')+(m.slug||'')).toLowerCase().includes(search);
+  });
+  const listEl=document.getElementById('pol-list');
+  if(!filtered.length){
+    listEl.innerHTML='<div class="empty-state">No markets match — try a different filter or refresh</div>';
+    return;
+  }
+  listEl.innerHTML = filtered.map(m=>{
+    const mp = getPrice(m);
+    const vol = parseFloat(m.volumeNum||m.volume||0);
+    const endDate = m.endDate ? new Date(m.endDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : 'no end date';
+    const isExpanded = politicsExpanded===m.id;
+    const userEst = politicsEstimates[m.id];
+    const sliderVal = userEst!==undefined ? Math.round(userEst*100) : Math.round(mp*100);
+    return `<div class="pol-card${isExpanded?' expanded':''}" onclick="togglePoliticsCard('${m.id}')">
+      <div class="pol-card-top">
+        <div class="pol-q">${(m.question||m.slug||'untitled market').slice(0,140)}</div>
+        <div>
+          <div class="pol-price">${pct(mp)}</div>
+          <div class="pol-price-sub">market</div>
+        </div>
+      </div>
+      <div class="pol-meta">
+        <span class="pol-tag">vol ${fmt(vol)}</span>
+        <span class="pol-tag">ends ${endDate}</span>
+        ${userEst!==undefined?`<span class="pol-tag" style="border-color:var(--purple);color:var(--purple)">your est. ${pct(userEst)}</span>`:''}
+      </div>
+      <div class="pol-detail" onclick="event.stopPropagation()">
+        <div class="pol-estimate-row">
+          <span style="font-size:11px;color:var(--text3);font-family:'DM Mono',monospace;white-space:nowrap">Your probability</span>
+          <div class="pol-slider-wrap">
+            <input type="range" class="pol-slider" min="1" max="99" value="${sliderVal}" oninput="onPoliticsEstimate('${m.id}',this.value,${mp})" />
+          </div>
+          <div class="pol-est-val" id="pol-est-${m.id}">${sliderVal}%</div>
+        </div>
+        <div class="pol-edge-readout" id="pol-edge-${m.id}"></div>
+        <div class="stake-box" id="pol-stake-${m.id}"></div>
+        <div class="pol-disclaimer">This page doesn't predict outcomes — it's a calculator for the judgment call you make after reading the news. Set your own probability based on actual research, not a guess.</div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // initialize edge readouts + stake widgets for expanded card
+  if(politicsExpanded){
+    const m=politicsMarkets.find(x=>x.id===politicsExpanded);
+    if(m){
+      const mp=getPrice(m);
+      const est=politicsEstimates[m.id]!==undefined?politicsEstimates[m.id]:mp;
+      updatePoliticsEdge(m.id, est, mp);
+    }
+  }
+}
+
+function togglePoliticsCard(id){
+  politicsExpanded = politicsExpanded===id ? null : id;
+  renderPoliticsList();
+}
+
+function onPoliticsEstimate(id, sliderVal, marketPrice){
+  const est = parseInt(sliderVal)/100;
+  politicsEstimates[id]=est;
+  document.getElementById('pol-est-'+id).textContent=sliderVal+'%';
+  updatePoliticsEdge(id, est, marketPrice);
+}
+
+function updatePoliticsEdge(id, est, marketPrice){
+  const edge = est-marketPrice;
+  const edgeEl=document.getElementById('pol-edge-'+id);
+  if(edgeEl){
+    edgeEl.innerHTML = `
+      <div class="pol-edge-chip">
+        <div class="pol-edge-chip-label">Your edge</div>
+        <div class="pol-edge-chip-val" style="color:${Math.abs(edge)<0.03?'var(--text)':edge>0?'var(--green)':'var(--red)'}">${edge>=0?'+':''}${(edge*100).toFixed(1)}%</div>
+      </div>
+      <div class="pol-edge-chip">
+        <div class="pol-edge-chip-label">Suggests</div>
+        <div class="pol-edge-chip-val" style="font-size:13px">${Math.abs(edge)<0.03?'No edge — pass':edge>0?'Buy YES':'Buy NO'}</div>
+      </div>`;
+  }
+  // stake widget uses YES-side price/prob; if user thinks NO, flip both for Kelly math
+  const priceCents = edge>=0 ? marketPrice*100 : (1-marketPrice)*100;
+  const probForKelly = edge>=0 ? est : 1-est;
+  renderStakeWidget('pol-stake-'+id, probForKelly, priceCents);
 }
 
 // ============ PORTFOLIO ============
@@ -1850,10 +2157,63 @@ function renderPortfolio(){
   renderStats();
   renderBetList();
   renderPnlChart();
+  renderMonthlyKPIs();
   // set today's date in form
   if(!document.getElementById('f-date').value){
     document.getElementById('f-date').value=new Date().toISOString().slice(0,10);
   }
+}
+
+// ============ MONTHLY KPI TRACKER ============
+let selectedMonth = 'all';
+
+function getMonthKey(dateStr){
+  const d=new Date(dateStr);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');
+}
+function getMonthLabel(key){
+  if(key==='all')return'All time';
+  const[y,m]=key.split('-');
+  return new Date(y,m-1,1).toLocaleDateString('en-US',{month:'short',year:'numeric'});
+}
+
+function renderMonthlyKPIs(){
+  const months=[...new Set(bets.map(b=>getMonthKey(b.date)))].sort().reverse();
+  const tabsEl=document.getElementById('month-tabs');
+  if(!tabsEl)return;
+  const allOptions=['all',...months];
+  tabsEl.innerHTML=allOptions.map(k=>
+    `<button class="month-tab${selectedMonth===k?' on':''}" onclick="selectMonth('${k}')">${getMonthLabel(k)}</button>`
+  ).join('');
+
+  const scoped = selectedMonth==='all' ? bets : bets.filter(b=>getMonthKey(b.date)===selectedMonth);
+  const resolved = scoped.filter(b=>b.status!=='open');
+  const wins = scoped.filter(b=>b.status==='win');
+  const totalBet = scoped.reduce((a,b)=>a+b.amount,0);
+  const resolvedStaked = resolved.reduce((a,b)=>a+b.amount,0);
+  const totalPayout = wins.reduce((a,b)=>a+(b.payout||0),0);
+  const pnl = totalPayout - resolvedStaked;
+  const winRate = resolved.length ? wins.length/resolved.length : null;
+  const roi = resolvedStaked>0 ? pnl/resolvedStaked : null;
+  const avgStake = scoped.length ? totalBet/scoped.length : 0;
+  const openCount = scoped.filter(b=>b.status==='open').length;
+
+  document.getElementById('month-pill').textContent = getMonthLabel(selectedMonth)+' · '+scoped.length+' bets';
+
+  const summaryEl=document.getElementById('month-summary');
+  summaryEl.innerHTML=`
+    <div class="month-summary-card"><div class="month-summary-label">P&amp;L</div><div class="month-summary-val" style="color:${pnl>=0?'var(--green)':'var(--red)'}">${pnl>=0?'+$':'−$'}${Math.abs(pnl).toFixed(2)}</div></div>
+    <div class="month-summary-card"><div class="month-summary-label">ROI</div><div class="month-summary-val" style="color:${(roi||0)>=0?'var(--green)':'var(--red)'}">${roi!==null?(roi>=0?'+':'')+(roi*100).toFixed(0)+'%':'—'}</div></div>
+    <div class="month-summary-card"><div class="month-summary-label">Win rate</div><div class="month-summary-val">${winRate!==null?(winRate*100).toFixed(0)+'%':'—'}</div></div>
+    <div class="month-summary-card"><div class="month-summary-label">Capital staked</div><div class="month-summary-val">$${totalBet.toFixed(0)}</div></div>
+    <div class="month-summary-card"><div class="month-summary-label">Avg stake</div><div class="month-summary-val">$${avgStake.toFixed(2)}</div></div>
+    <div class="month-summary-card"><div class="month-summary-label">Open bets</div><div class="month-summary-val" style="color:var(--amber)">${openCount}</div></div>
+  `;
+}
+
+function selectMonth(key){
+  selectedMonth=key;
+  renderMonthlyKPIs();
 }
 
 function renderStats(){
