@@ -1910,7 +1910,8 @@ function renderStakeWidget(containerId, modelProb, marketPriceCents, ctx){
 function updateStakeWidget(containerId, pWin, priceCents){
   const bankroll = parseFloat(document.getElementById(containerId+'-bankroll')?.value)||200;
   const frac = document.getElementById(containerId+'-frac')?.value||'quarter';
-  let kelly = kellyFraction(pWin, priceCents, frac);
+  let kelly = kellyFraction(pWin, priceCents, frac); // already has fraction (quarter/half/full) applied
+  const rawKelly = kellyFraction(pWin, priceCents, 'full'); // true unfractioned Kelly, for transparency only
   const HARD_CAP = 0.15; // never suggest more than 15% of bankroll on one bet, regardless of Kelly output
   const capped = Math.min(kelly, HARD_CAP);
   const stake = bankroll*capped;
@@ -1922,8 +1923,9 @@ function updateStakeWidget(containerId, pWin, priceCents){
     warnEl.textContent='';
     return;
   }
-  resEl.innerHTML = `<div class="stake-result-amt">$${stake.toFixed(2)}</div><div class="stake-result-meta">${(capped*100).toFixed(1)}% of bankroll<br>raw Kelly: ${(kelly*100).toFixed(1)}%</div>`;
-  warnEl.textContent = kelly>HARD_CAP ? `⚠ Kelly suggested ${(kelly*100).toFixed(0)}% — capped at 15% to limit variance on a small bankroll.` : '';
+  const fracLabel = frac==='quarter'?'¼':frac==='half'?'½':'full';
+  resEl.innerHTML = `<div class="stake-result-amt">$${stake.toFixed(2)}</div><div class="stake-result-meta">${(capped*100).toFixed(1)}% of bankroll (${fracLabel}-Kelly)<br>uncapped full Kelly: ${(rawKelly*100).toFixed(1)}%</div>`;
+  warnEl.textContent = kelly>HARD_CAP ? `⚠ ${fracLabel}-Kelly suggested ${(kelly*100).toFixed(0)}% — capped at 15% to limit variance on a small bankroll.` : (rawKelly>0.4 ? `⚠ Full Kelly is ${(rawKelly*100).toFixed(0)}% here — a very large edge claim. Double-check your probability estimate before sizing up.` : '');
 }
 
 // ============ POLITICS / NEWS MARKETS ============
