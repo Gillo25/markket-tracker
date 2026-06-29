@@ -1401,7 +1401,12 @@ function computeModel(m,mp,sm){
     ?{hist:0.15,market:0.15,momentum:0.10,timing:0.10,smart:0.10,tweet:0.40}
     :{hist:0.30,market:0.25,momentum:0.15,timing:0.15,smart:0.15,tweet:0};
 
-  const tweetComponent=hasTweet?(0.5+tweetBias*0.5):0.5;
+  // tweet component is anchored to THIS bracket's own market price, not a flat 50% —
+  // a flat 50% anchor let a "bearish" signal still drag a low-probability bracket's
+  // estimate upward, since 35% > this bracket's true ~4-18% baseline. Anchoring to mp
+  // means a negative tweetBias always pulls toward 0 and a positive one always pulls toward 1,
+  // regardless of whether this bracket is naturally a long-shot or a favorite.
+  const tweetComponent=hasTweet?(tweetBias>=0 ? mp+(1-mp)*tweetBias : mp*(1+tweetBias)):mp;
   const estimate=Math.max(0.02,Math.min(0.98,
     w.hist*histBase+w.market*mp+w.momentum*(mp+momentum*2)+w.timing*timingRate+w.smart*(0.5+smBias*2)+w.tweet*tweetComponent
   ));
