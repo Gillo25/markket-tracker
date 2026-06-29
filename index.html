@@ -1060,9 +1060,9 @@ async function get(url){
 }
 function getToken(m){if(!m.clobTokenIds)return null;try{return JSON.parse(m.clobTokenIds)[0];}catch(e){return null;}}
 function getPrice(m){
-  if(m.lastTradePrice)return parseFloat(m.lastTradePrice);
-  if(m.outcomePrices){try{return parseFloat(JSON.parse(m.outcomePrices)[0]);}catch(e){}}
-  if(m.bestBid&&m.bestAsk)return(parseFloat(m.bestBid)+parseFloat(m.bestAsk))/2;
+  if(m.lastTradePrice!=null && m.lastTradePrice!=='')return parseFloat(m.lastTradePrice);
+  if(m.outcomePrices){try{const p=JSON.parse(m.outcomePrices)[0];if(p!=null&&p!=='')return parseFloat(p);}catch(e){}}
+  if(m.bestBid!=null && m.bestAsk!=null)return(parseFloat(m.bestBid)+parseFloat(m.bestAsk))/2;
   return 0.5;
 }
 function getOutcome(m){
